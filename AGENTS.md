@@ -24,18 +24,22 @@ There is no web server, Docker stack, test suite, or linter configuration.
 ### Dependencies
 
 - **Python 3** (stdlib only for the solver; `pyautogui` for the full CLI).
-- Install runtime dependency: `python3 -m pip install pyautogui` (see README).
-- On **Linux**, `main.py` imports `controller.py`, which loads pyautogui/MouseInfo and requires **`python3-tk`**. This is a one-time system package (`sudo apt-get install python3-tk`); it is not in the VM update script.
+- The VM update script installs `pyautogui` (`python3 -m pip install --break-system-packages pyautogui`), so it is already present in Cloud sessions.
+- `controller.py` imports `pyautogui` inside a `try/except ImportError`, so the solver and `main.py --help` work even if `pyautogui` is missing. `pyautogui` is only loaded when the automation path runs.
+- On **Linux**, importing `pyautogui` requires the **`python3-tk`** system package; this is baked into the VM snapshot (it is intentionally NOT in the update script, since it is a system dep).
 
 ### What can run in Cloud vs macOS
+
+The Cloud VM has a live X display (`DISPLAY=:1`), so `pyautogui` imports and reports a real screen size, and mouse moves work.
 
 | Mode | Cloud VM | macOS + iPhone |
 |---|---|---|
 | Solver-only (`WordHuntSolver` from `solver.py`) | Yes | Yes |
-| `python3 main.py --help` | Yes (with `python3-tk`) | Yes |
-| `--dry-run` / live playback | No (needs interactive calibration + display) | Yes |
+| `python3 main.py --help` | Yes (no extra deps) | Yes |
+| `--dry-run` (solve + pixel-map, no real drags) | Yes — calibration reads the live cursor, so script it by moving the `pyautogui` cursor during the two 3s capture windows and piping board letters to stdin | Yes |
+| Live playback against a real Word Hunt board | No (no QuickTime/iPhone/Switch Control) | Yes |
 
-Full end-to-end automation requires macOS, QuickTime Player (iPhone USB mirror), Switch Control, and Word Hunt on the device. Do not expect mouse automation tests to pass in Linux Cloud VMs.
+Full end-to-end automation against an actual game requires macOS, QuickTime Player (iPhone USB mirror), Switch Control, and Word Hunt on the device. The mouse-drag layer itself (`controller.py`) does run in the Cloud VM, but there is no game window to control.
 
 ### Verify the environment
 
